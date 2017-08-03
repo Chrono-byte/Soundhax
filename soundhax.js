@@ -3,6 +3,7 @@ const ytdl = require('ytdl-core');
 const streamOptions = { seek: 0, volume: 1 };
 const client = new Discord.Client();
 const broadcast = client.createVoiceBroadcast();
+const oneLine = require('common-tags').oneLine
 const config = require('./config.json');
 const songs = require('./songs.json');
 
@@ -17,21 +18,32 @@ client.on('ready', () => {
 
 client.on('message', message => {
     if(message.author.bot === true) return;
-    if(message.content.startsWith('<@342469635037462528>') !== true) return;
+    // if(message.mentions.users.first() !== client.user) return;
+    if(message.content.startsWith('s!') === false) return;
     const args = message.content.split(/\s+/g);
-    if(args[1] === `play`) {
+    console.log(args)
+    if(message.content.includes(`start`)) {
     message.member.voiceChannel.join().then(connection => {
         const dispatcher = connection.playBroadcast(broadcast);
-        message.reply(`Now Playing`)
+        message.reply(`Your listening to Soundhax Radio!`)
         }).catch(console.error);
-    }
-    if(args[1] === `stop`) {
+    } else
+    if(message.content.includes(`stop`)) {
         if(message.guild.voiceConnection) {
             message.guild.voiceConnection.dispatcher.end()
             message.guild.voiceConnection.disconnect()
             message.reply(`Ban wave inbound, I better leave.`)
         }
-    }
+    } else
+    if(message.content.includes(`ping`)) {
+			message.reply('Pinging...').then((pingmessage) => {
+                pingmessage.edit(oneLine`
+				${message.channel.type !== 'dm' ? `${message.author},` : ''}
+				Pong! The message round-trip took ${pingmessage.createdTimestamp - message.createdTimestamp}ms.`);
+            })
+    } //else {
+    //     message.reply(`Hello, I'm Soundhax a music bot by Chronomly#8108, if you need to learn the commands do @Soundhax help or s!help, if you need something ***really*** bad join https://discord.io/chrono and mention \`@Support\``)
+    // }
 }); 
 
 //Broadcast Handling
@@ -40,7 +52,7 @@ broadcast.on('subscribe', () => {
     broadcast.dispatchers.map((sub) => {
         count = count+1
     })
-    client.user.setGame(`homebrew in ${count} vcs`)
+    client.user.setGame(`homebrew in ${count} vc(s)`)
 }); 
 
 broadcast.on('end', () => {
@@ -52,7 +64,7 @@ broadcast.on('end', () => {
     broadcast.dispatchers.map((sub) => {
         count = count+1
     })
-    client.user.setGame(`homebrew in ${count} vcs`)
+    client.user.setGame(`homebrew in ${count} vc(s)`)
 });
- 
+
 client.login(config.token);
