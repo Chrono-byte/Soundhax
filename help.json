@@ -1,0 +1,36 @@
+{
+    "commands" : [
+        {
+            "name": "s!help",
+            "desc": "Sends help for this bot"
+        },
+        {
+            "name": "sh!start",
+            "desc": "Starts listening to the Soundhax broadcast"
+        },
+        {
+            "name": "sh!stop",
+            "desc": "Stops listing to the Soundhax broadcast"
+        },
+        {
+            "name": "sh!ping",
+            "desc": "Pong! tests the bots responce time"
+        },
+        {
+            "name": "sh!suggest",
+            "desc": "Suggest a song for Soundhax"
+        },
+        {
+            "name": "sh!invite",
+            "desc": "Sends an invite for Soundhax"
+        },
+        {
+            "name": "sh!don",
+            "desc": "Donator Features"
+        },
+        {
+            "name": "sh!info",
+            "desc": "Sends info about the bot"
+        }
+    ]
+}
