@@ -6,7 +6,6 @@ const fs = require('fs');
 //JSON Requires
 const config = require('./config.json');
 const songs = require('./songs.json');
-const donators = require('./donators.json')
 const help = require('./help.json')
 //Core Stuff
 const streamOptions = { seek: 0, volume: 1 };
@@ -29,14 +28,18 @@ client.on('message', message => {
     const args = message.content.split(/\s+/g);
     console.log(args)
     if(message.content.includes(`start`)) {
-    message.member.voiceChannel.join().then(connection => {
-        const dispatcher = connection.playBroadcast(broadcast);
-        message.channel.send(`Playing.`)
-        }).catch(console.error);
+        if(message.member.voiceChannel) {
+            message.member.voiceChannel.join().then(connection => {
+                const dispatcher = connection.playBroadcast(broadcast);
+                message.reply(`Playing.`)
+            }).catch(console.error);
+        } else return message.reply('You\'re not in a voice channel here.')
     }
     if(message.content.includes(`stop`)) {
         if(message.guild.voiceConnection) {
-            message.guild.voiceConnection.dispatcher.end()
+            if(message.guild.voiceConnection.dispatcher) {
+                message.guild.voiceConnection.dispatcher.end()
+            }
             message.guild.voiceConnection.disconnect()
             message.reply(`Stopped`)
         }
@@ -82,8 +85,8 @@ client.on('message', message => {
             .setTimestamp()
             message.channel.send({ embed })
     }
-    if(donators[message.author.id].rank === true) {
-        if(message.content.startsWith(config.prefix+'don')) {
+    if(message.content.includes('don')) {
+        if(JSON.parse(fs.readFileSync("donators.json", {encoding:"utf8"}))[message.author.id].rank === true) {
         if(args[1] === `join`) {
             if(message.member.voiceChannel) {
                 message.member.voiceChannel.join().then((channel) => {
@@ -109,13 +112,13 @@ client.on('message', message => {
                     message.reply({embed: embed})
                 })
             } else return message.reply('I\'m not in a voice channel here.')
-        }
+        } 
         if(args[1] === `np`) {
             if(message.guild.voiceConnection) {
                 
             } else return message.reply('I\'m not in a voice channel here.')
         }
-    }}
+    } else return message.reply('Your not a donator!')}
     //else {
     //     message.reply(`Hello, I'm Soundhax a music bot by Chronomly#8108, if you need to learn the commands do @Soundhax help or s!help, if you need something ***really*** bad join https://discord.io/chrono and mention \`@Support\``)
     // }
