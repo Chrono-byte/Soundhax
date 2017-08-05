@@ -3,22 +3,51 @@ const Discord = require('discord.js');
 const ytdl = require('ytdl-core');
 const oneLine = require('common-tags').oneLine
 const fs = require('fs');
+const ms = require('ms')
 //JSON Requires
 const config = require('./config.json');
-const songs = require('./songs.json');
+const database = require('./database.json');
 const help = require('./help.json')
 //Core Stuff
 const streamOptions = { seek: 0, volume: 1 };
 const client = new Discord.Client();
 const broadcast = client.createVoiceBroadcast();
 
+function setGame() {
+    let randomInt = Math.floor(Math.random() * database.games.length) + 0
+    const game = database.games[randomInt]
+    client.user.setGame(game)
+    console.log('Set Game.')
+}
+
+function displayVCCount(broadcast) {
+    let count;
+    try {
+        broadcast.dispatchers.map((sub) => {
+        count = count+1
+        }) 
+    } catch (error) {
+        console.log(error)
+    } {
+        return count
+    }
+}
+
+function nextSong(broadcast) {
+    let randomInt = Math.floor(Math.random() * database.songs.length) + 0
+    const stream = ytdl(database.songs[randomInt], { filter : 'audioonly' });
+    broadcast.playStream(stream);
+}
+
+setInterval(function() {
+    setGame()
+}, ms("10s"))
+
 client.on('ready', () => {
     console.log(`Logged in as ${client.user.tag}, I'm in ${client.guilds.size} server(s)`);
-    console.log(`The total song count is ${songs.songs.length}`)
-    let randomInt = Math.floor(Math.random() * songs.songs.length) + 0
-    const SongToPlay = songs.songs[randomInt]
-    const stream = ytdl(SongToPlay, { filter : 'audioonly' });
-    broadcast.playStream(stream);
+    console.log(`The total song count is ${database.songs.length}`)
+    nextSong(broadcast)
+    setGame()
 });
 
 client.on('message', message => {
@@ -42,7 +71,7 @@ client.on('message', message => {
             }
             message.guild.voiceConnection.disconnect()
             message.reply(`Stopped`)
-        }
+        } else return message.reply('I\'m not in a voice channel here.')
     }
     if(message.content.includes(`ping`)) {
 			message.reply('Pinging...').then((pingmessage) => {
@@ -86,7 +115,7 @@ client.on('message', message => {
             message.channel.send({ embed })
     }
     if(message.content.includes('don')) {
-        if(JSON.parse(fs.readFileSync("donators.json", {encoding:"utf8"}))[message.author.id].rank === true) {
+        if(JSON.parse(fs.readFileSync("database.json", {encoding:"utf8"}))[message.author.id].rank === true) {
         if(args[1] === `join`) {
             if(message.member.voiceChannel) {
                 message.member.voiceChannel.join().then((channel) => {
@@ -99,13 +128,19 @@ client.on('message', message => {
                 const donator_stream = ytdl(args[2], { filter : 'audioonly' });
                 const info = ytdl.getInfo(args[2]).then((info) => {
                     let time = info.length_seconds
+                    //100% Stack Overflow
                     let minutes = Math.floor(time / 60);
                     let seconds = time - minutes * 60;
                     let hours = Math.floor(time / 3600);
                     time = time - hours * 3600;
+                    function str_pad_left(string,pad,length) {
+                        return (new Array(length+1).join(pad)+string).slice(-length);
+                    }
+                    let finalTime = str_pad_left(minutes,'0',2)+':'+str_pad_left(seconds,'0',2); 
+                    //End 100% Stack Overflow               
                     const embed = new Discord.RichEmbed()
                         .setAuthor('Now Playing:', client.user.avatarURL)
-                        .setDescription(`URL: ${info.video_url}\nTitle: ${info.title}\nAuthor: ${info.author.name}\nLength: ${time}`)
+                        .setDescription(`URL: ${info.video_url}\nTitle: ${info.title}\nAuthor: ${info.author.name}\nLength: ${finalTime}`)
                         .setTimestamp()
                         .setImage(info.thumbnail_url);
                     message.guild.voiceConnection.playStream(donator_stream)
@@ -118,7 +153,7 @@ client.on('message', message => {
                 
             } else return message.reply('I\'m not in a voice channel here.')
         }
-    } else return message.reply('Your not a donator!')}
+    }}
     //else {
     //     message.reply(`Hello, I'm Soundhax a music bot by Chronomly#8108, if you need to learn the commands do @Soundhax help or s!help, if you need something ***really*** bad join https://discord.io/chrono and mention \`@Support\``)
     // }
@@ -126,23 +161,14 @@ client.on('message', message => {
 
 //Broadcast Handling
 broadcast.on('subscribe', () => {
-    let count = 0;
-    broadcast.dispatchers.map((sub) => {
-        count = count+1
-    })
-    client.user.setGame(`homebrew in ${count} vc(s)`)
+    let vcCount = parseInt(displayVCCount(broadcast))
+    client.user.setGame(`homebrew in ${vcCount} vc(s)`)
 }); 
 
 broadcast.on('end', () => {
-    let randomInt = Math.floor(Math.random() * songs.songs.length) + 0
-    const SongToPlay = songs.songs[randomInt]
-    const stream = ytdl(SongToPlay, { filter : 'audioonly' });
-    broadcast.playStream(stream);
-    let count = 0;
-    broadcast.dispatchers.map((sub) => {
-        count = count+1
-    })
-    client.user.setGame(`homebrew in ${count} vc(s)`)
+    let vcCount = parseInt(displayVCCount(broadcast))
+    nextSong(broadcast)
+    client.user.setGame(`homebrew in ${vcCount} vc(s)`)
 });
 
 client.login(config.token);
