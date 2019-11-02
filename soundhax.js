@@ -7,6 +7,7 @@ const ms = require('ms')
 //JSON Requires
 const config = require('./config.json');
 const database = require('./database.json');
+let songs = require('./songs.json').songs;
 const help = require('./help.json')
 //Core Stuff
 const streamOptions = { seek: 0, volume: 1 };
@@ -21,33 +22,27 @@ function setGame() {
 }
 
 function displayVCCount(broadcast) {
-    let count;
-    try {
-        broadcast.dispatchers.map((sub) => {
+    let count = 0
+    broadcast.dispatchers.map((sub) => {
         count = count+1
-        }) 
-    } catch (error) {
-        console.log(error)
-    } {
-        return count
-    }
+    })
+    client.user.setGame(`homebrew in ${count} vc(s)`)
 }
 
 function nextSong(broadcast) {
-    let randomInt = Math.floor(Math.random() * database.songs.length) + 0
-    const stream = ytdl(database.songs[randomInt], { filter : 'audioonly' });
+    let randomInt = Math.floor(Math.random() * songs.length) + 0
+    const stream = ytdl(songs[randomInt], { filter : 'audioonly' });
     broadcast.playStream(stream);
 }
 
 setInterval(function() {
     setGame()
-}, ms("10s"))
+}, ms("30s"))
 
 client.on('ready', () => {
     console.log(`Logged in as ${client.user.tag}, I'm in ${client.guilds.size} server(s)`);
-    console.log(`The total song count is ${database.songs.length}`)
+    console.log(`The total song count is ${songs.length}`)
     nextSong(broadcast)
-    setGame()
 });
 
 client.on('message', message => {
@@ -154,15 +149,14 @@ client.on('message', message => {
             } else return message.reply('I\'m not in a voice channel here.')
         }
     }}
-    //else {
+    // else {
     //     message.reply(`Hello, I'm Soundhax a music bot by Chronomly#8108, if you need to learn the commands do @Soundhax help or s!help, if you need something ***really*** bad join https://discord.io/chrono and mention \`@Support\``)
     // }
 }); 
 
 //Broadcast Handling
 broadcast.on('subscribe', () => {
-    let vcCount = parseInt(displayVCCount(broadcast))
-    client.user.setGame(`homebrew in ${vcCount} vc(s)`)
+    displayVCCount(broadcast)
 }); 
 
 broadcast.on('end', () => {
